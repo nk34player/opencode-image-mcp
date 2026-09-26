@@ -13,6 +13,31 @@ configure.
 
 ---
 
+## Bring your own endpoint
+
+**No preset required.** Hand the agent a base URL and it registers the
+endpoint, discovers its models, and remembers it:
+
+> Use `https://api.example.com/v1` with key `sk-abc123` and call it `example`.
+
+The agent calls `add_provider`, which:
+
+1. probes `https://api.example.com/v1/models`,
+2. keeps only the models that can produce images,
+3. saves the endpoint (and key) to the gitignored config file,
+4. sets that model as the default.
+
+From then on, in this session **and every future run**:
+
+> Make me a corgi astronaut in 16:9.
+
+...resolves straight to your endpoint. If the endpoint exposes several image
+models, the agent inspects the list and calls `set_default_model` to pick one.
+Endpoints without a `/models` route still work — pass `default_model` and
+`discover=false`.
+
+---
+
 ## Features
 
 - **Any OpenAI-compatible provider** — built-in presets plus arbitrary custom
@@ -40,7 +65,10 @@ configure.
 
 ---
 
-## Supported providers (presets)
+## Supported providers (optional presets)
+
+These presets are just convenient shortcuts — none of them are required, and
+the custom-endpoint flow above works with any OpenAI-compatible API.
 
 | Provider | Dialect | Model list endpoint | Notes |
 | --- | --- | --- | --- |
@@ -171,6 +199,12 @@ Copy `providers.example.json` and edit. Only the keys you set are changed.
 Set a provider to `null` to disable a preset. Setting `api_key_env` to `null`
 marks a provider as anonymous (no key required) — handy for local servers.
 
+**Where runtime additions are stored:** `add_provider` writes to
+`IMAGE_MCP_CONFIG` when set, otherwise `~/.config/opencode-image-mcp/providers.json`.
+A key passed to `add_provider` is stored inline in that file. It is gitignored
+and blocked by the pre-commit hook, so it never reaches the cloud — but keep the
+file out of shared/backup folders if you would rather the key not sit on disk.
+
 **Provider keys:** `base_url`, `dialect`, `default_model`, `label`, `api_key`,
 `api_key_env`, `alt_api_key_envs`, `auth_header`, `auth_scheme`, `models_path`,
 `image_models_path`, `generation_path`, `edit_path`, `chat_path`, `edit_style`,
@@ -262,6 +296,40 @@ Discovers image models from configured providers, cached on disk. Each entry
 has `provider`, `id`, `full_id`, `name`, `source` and, when the provider exposes
 them, `capabilities` and `pricing`. Errors per provider are returned under
 `errors`. Use `refresh=true` to bypass the cache.
+
+### `add_provider(...)`
+
+Register **any** OpenAI-compatible image endpoint at runtime. It probes
+`{base_url}/models`, filters to image models, persists the provider to the
+config file, and makes it usable immediately and in future sessions.
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `id` | string | *required* | Short handle for `provider:model` specs, e.g. `example` |
+| `base_url` | string | *required* | API root, e.g. `https://api.example.com/v1` |
+| `api_key` | string | `null` | Bearer token, stored in the gitignored config file |
+| `api_key_env` | string | `null` | Read the key from an env var instead (ignored if `api_key` is set) |
+| `default_model` | string | `null` | Model to use by default; auto-picked if exactly one image model is found |
+| `dialect` | string | `auto` | `auto`, `images` (`/images/generations`) or `chat` (`/chat/completions` + image modalities) |
+| `make_default` | bool | `false` | Also set this as the global default model |
+| `extra_headers` | object | `null` | Extra request headers |
+| `include_models` / `exclude_models` | string[] | `null` | Regex allow/deny applied to discovered model ids |
+| `aspect_ratio_mode` | string | `size` / `prompt` | `size`, `field` or `prompt` |
+| `size_style` | string | `string` | `string`, `width_height`, `image_size` or `none` |
+| `discover` | bool | `true` | Set `false` for endpoints without a `/models` route |
+
+Returns the discovered `models`, the chosen `default_model`, `key_source`,
+`warnings` and the `saved_to` path. The key is never echoed back.
+
+### `set_default_model(model)`
+
+Persist the model used when `generate_image` is called without one, e.g.
+`example:flux-schnell`. Saved to the config file, so it applies to future runs.
+
+### `remove_provider(id)`
+
+Remove a provider (including a built-in preset) from the config file. Clears the
+default model if it pointed at that provider.
 
 ### `generate_image(...)`
 
@@ -356,6 +424,8 @@ when available; otherwise it filters model ids by image-family heuristics
 
 ## Development
 
+The test suite is **local only** — `tests/` is gitignored and never committed.
+
 ```bash
 uv venv
 uv pip install -e ".[dev]"
@@ -366,7 +436,7 @@ Layout:
 
 ```
 src/opencode_image_mcp/
-  config.py     # presets, providers.json, env, Settings
+  config.py     # presets, providers.json read/write, env, Settings
   registry.py   # model discovery, cache, resolution
   dialects.py   # images/chat request builders + response parsers
   transport.py  # httpx client, retries/backoff, downloads, polling
@@ -375,8 +445,8 @@ src/opencode_image_mcp/
   server.py     # MCP tools
 ```
 
-The test suite (90 tests) mocks HTTP with `httpx.MockTransport`, so it runs
-offline and costs nothing.
+The tests mock HTTP with `httpx.MockTransport`, so they run offline and cost
+nothing.
 
 ---
 
@@ -385,6 +455,9 @@ offline and costs nothing.
 `.env` and `providers.json` are gitignored, so real keys and custom endpoints
 never get committed. That is backed by a pre-commit hook in `.githooks/` which
 also catches `git add -f` and any staged diff that looks like a live API key.
+
+The `tests/` directory is gitignored too: it stays on your machine for local
+runs and is never committed.
 
 The hooks path is local git config, so enable it once per clone:
 
