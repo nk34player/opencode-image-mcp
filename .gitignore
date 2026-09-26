@@ -1,0 +1,67 @@
+# ---------------------------------------------------------------------------
+# SECRETS / LOCAL OVERRIDES — these must NEVER be committed or pushed.
+# The .githooks/pre-commit hook enforces this even if someone forces an add.
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+providers.json
+secrets.json
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ---------------------------------------------------------------------------
+# Local-only test suite — kept on disk for running, never committed
+# ---------------------------------------------------------------------------
+tests/
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+*.whl
+*.tar.gz
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# ---------------------------------------------------------------------------
+# Model cache (only if someone points IMAGE_MCP_CACHE_DIR inside the repo)
+# ---------------------------------------------------------------------------
+.opencode-image-mcp/
+models.json
+
+# ---------------------------------------------------------------------------
+# Generated images / scratch output
+# ---------------------------------------------------------------------------
+generated/
+out/
+images/
+
+# ---------------------------------------------------------------------------
+# Unrelated local project kept out of this repository
+# ---------------------------------------------------------------------------
+pyghidra_mcp_projects/
+
+# ---------------------------------------------------------------------------
+# Editors / OS
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

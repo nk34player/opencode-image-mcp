@@ -1,0 +1,44 @@
+#!/bin/sh
+# opencode-image-mcp pre-commit guard.
+#
+# Defence in depth: .gitignore already excludes secrets, but this also blocks
+# `git add -f`. It refuses to commit local secret files and refuses any staged
+# diff that looks like a live API key, so nothing sensitive reaches the cloud.
+
+set -eu
+
+blocked_files='^(\.env$|\.env\..+|providers\.json|secrets\.json)$|\.(pem|key|p12|pfx)$'
+key_patterns='sk-or-v1-[A-Za-z0-9]{16,}|sk-[A-Za-z0-9]{24,}|xai-[A-Za-z0-9]{16,}|AIza[0-9A-Za-z_-]{24,}|gsk_[A-Za-z0-9]{20,}'
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$staged" ] && exit 0
+
+problems=""
+
+for file in $staged; do
+    base=$(basename "$file")
+    case "$base" in
+        .env.example) continue ;;
+    esac
+    if printf '%s' "$base" | grep -Eq "$blocked_files"; then
+        problems="$problems
+  $file"
+    fi
+done
+
+if git diff --cached -U0 | grep -Eq "$key_patterns"; then
+    problems="$problems
+  (staged content contains something that looks like a live API key)"
+fi
+
+if [ -n "$problems" ]; then
+    printf '%s\n' "pre-commit: refusing to commit secrets or local-only files:" >&2
+    printf '%s\n' "$problems" >&2
+    printf '%s\n' "" >&2
+    printf '%s\n' "These are gitignored on purpose so they never reach the cloud." >&2
+    printf '%s\n' "Move the value into your MCP client's env block instead." >&2
+    printf '%s\n' "Only override deliberately with: git commit --no-verify" >&2
+    exit 1
+fi
+
+exit 0

@@ -1,0 +1,41 @@
+{
+  "default_model": "openrouter:google/gemini-3.1-flash-image-preview",
+  "aliases": {
+    "nb2": "openrouter:google/gemini-3.1-flash-image-preview",
+    "fast": "gemini:gemini-2.5-flash-image",
+    "cheap": "openrouter:black-forest-labs/flux.2-schnell",
+    "gpt": "openai:gpt-image-1"
+  },
+  "settings": {
+    "output_dir": "./generated",
+    "timeout_s": 300,
+    "retries": 3
+  },
+  "providers": {
+    "local": {
+      "base_url": "http://localhost:8000/v1",
+      "dialect": "images",
+      "api_key_env": "LOCAL_API_KEY",
+      "default_model": "flux-schnell",
+      "include_models": ["flux", "sdxl"],
+      "aspect_ratio_mode": "size"
+    },
+    "comfy": {
+      "base_url": "http://localhost:8188/openai/v1",
+      "dialect": "chat",
+      "chat_modalities": true,
+      "api_key_env": null,
+      "default_model": "comfy-image",
+      "poll": {
+        "url_template": "{base_url}/jobs/{id}",
+        "status_field": "status",
+        "done_values": ["completed", "done", "succeeded"],
+        "failed_values": ["failed", "error", "cancelled"],
+        "result_url_field": "result_url",
+        "interval_s": 2,
+        "max_interval_s": 10
+      }
+    },
+    "together": null
+  }
+}

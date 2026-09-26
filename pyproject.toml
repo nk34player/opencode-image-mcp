@@ -1,0 +1,41 @@
+[project]
+name = "opencode-image-mcp"
+version = "0.1.0"
+description = "Multi-provider image generation MCP server for any OpenAI-compatible API"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "opencode-image-mcp contributors" }]
+keywords = ["mcp", "image-generation", "openai-compatible", "openrouter", "gemini", "flux"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Multimedia :: Graphics",
+]
+dependencies = [
+  "mcp>=2.0",
+  "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+opencode-image-mcp = "opencode_image_mcp.server:main"
+
+[project.urls]
+Homepage = "https://github.com/"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/opencode_image_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
