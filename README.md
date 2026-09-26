@@ -146,7 +146,7 @@ FIREWORKS_API_KEY=...
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `OUTPUT_DIR` (or `IMAGE_MCP_OUTPUT_DIR`) | `~/opencode-images` | Default save directory |
+| `OUTPUT_DIR` (or `IMAGE_MCP_OUTPUT_DIR`) | the workspace (current directory) | Default save directory |
 | `IMAGE_MCP_TIMEOUT` | `300` | Per-request timeout in seconds |
 | `IMAGE_MCP_RETRIES` | `3` | Retry attempts for `429`/`5xx`/network errors |
 | `IMAGE_MCP_MODEL_TTL` | `86400` | Model-list cache TTL in seconds |
@@ -341,7 +341,7 @@ default model if it pointed at that provider.
 | `size` | string | `null` | Explicit size, e.g. `1536x1024` |
 | `quality` | string | `null` | `low`/`medium`/`high`/`auto` (where supported) |
 | `n` | int | `1` | Number of images |
-| `output_path` | string | `null` | Exact file, a directory, or omitted for `OUTPUT_DIR` |
+| `output_path` | string | `null` | Exact file, a directory, or omitted for the workspace directory |
 | `filename_prefix` | string | `null` | Stem for auto-generated names |
 | `input_image_path` | string | `null` | One reference image → edit mode |
 | `input_image_paths` | string[] | `null` | Multiple references (where supported) |

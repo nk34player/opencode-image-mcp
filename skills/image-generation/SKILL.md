@@ -59,8 +59,10 @@ check `list_providers` before registering anything new.
    options; `refresh=true` to bypass the cache.
 4. **Pick a model** — prefer an explicit `example:model-id` spec.
 5. **Generate** — call `generate_image` with a concrete prompt.
-6. **Report back** — give the file path. Use `return_image_content=true` when
-   the user wants to *see* the result in chat.
+6. **Report back** — give the file path. Images save into the workspace
+   (current directory) by default, so the path is usually relative to the
+   project. Use `return_image_content=true` when the user wants to *see* the
+   result in chat.
 
 ## Choosing a model
 

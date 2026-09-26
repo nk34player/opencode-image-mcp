@@ -14,8 +14,21 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-DEFAULT_OUTPUT_DIR = Path.home() / "opencode-images"
 DEFAULT_CACHE_DIR = Path.home() / ".cache" / "opencode-image-mcp"
+
+
+def default_output_dir() -> Path:
+    """Where images land when no ``output_path`` is given.
+
+    This is the current working directory. MCP clients launch a local stdio
+    server with the workspace as its process directory, so generated images
+    end up next to the project instead of in a fixed home-folder location.
+    Override it with ``OUTPUT_DIR`` (or ``IMAGE_MCP_OUTPUT_DIR``).
+    """
+    try:
+        return Path.cwd()
+    except OSError:  # pragma: no cover - cwd can be unreachable in odd sandboxes
+        return Path.home()
 
 PROVIDER_KEYS = {
     "id",
@@ -185,7 +198,7 @@ class ProviderConfig:
 
 @dataclass
 class Settings:
-    output_dir: Path = DEFAULT_OUTPUT_DIR
+    output_dir: Path = field(default_factory=default_output_dir)
     cache_dir: Path = DEFAULT_CACHE_DIR
     timeout_s: float = 300.0
     connect_timeout_s: float = 20.0
@@ -397,7 +410,7 @@ def _settings_from_env() -> Settings:
     settings = Settings()
     output = os.environ.get("IMAGE_MCP_OUTPUT_DIR") or os.environ.get("OUTPUT_DIR")
     if output:
-        settings.output_dir = Path(output).expanduser()
+        settings.output_dir = Path(output).expanduser().resolve()
     cache = os.environ.get("IMAGE_MCP_CACHE_DIR")
     if cache:
         settings.cache_dir = Path(cache).expanduser()
@@ -412,9 +425,9 @@ def _apply_settings_dict(settings: Settings, data: dict[str, Any]) -> Settings:
     if not isinstance(data, dict):
         return settings
     if "output_dir" in data and data["output_dir"]:
-        settings.output_dir = Path(str(data["output_dir"])).expanduser()
+        settings.output_dir = Path(str(data["output_dir"])).expanduser().resolve()
     if "cache_dir" in data and data["cache_dir"]:
-        settings.cache_dir = Path(str(data["cache_dir"])).expanduser()
+        settings.cache_dir = Path(str(data["cache_dir"])).expanduser().resolve()
     if "timeout_s" in data and data["timeout_s"]:
         settings.timeout_s = float(data["timeout_s"])
     if "retries" in data and data["retries"] is not None:

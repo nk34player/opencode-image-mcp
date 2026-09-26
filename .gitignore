@@ -46,11 +46,16 @@ htmlcov/
 models.json
 
 # ---------------------------------------------------------------------------
-# Generated images / scratch output
+# Generated images — the server writes into the workspace by default
 # ---------------------------------------------------------------------------
 generated/
 out/
 images/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
 
 # ---------------------------------------------------------------------------
 # Unrelated local project kept out of this repository
